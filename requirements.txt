@@ -1,6 +1,6 @@
 Flask==1.0
 itsdangerous==0.24
-tensorflow==1.5.0
+tensorflow==1.15.0
 Jinja2>=2.10
 MarkupSafe==1.0
 keras==2.2.5
