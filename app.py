@@ -1,10 +1,14 @@
 from __future__ import division, print_function
 # coding=utf-8
+#Remove Future Warnings
+from warnings import simplefilter 
+simplefilter(action='ignore', category=FutureWarning)
 import sys
 import os
 import glob
 import re
 import numpy as np
+import wikipedia
 
 # Keras
 from keras.applications.imagenet_utils import preprocess_input, decode_predictions
@@ -12,7 +16,7 @@ from keras.models import load_model
 from keras.preprocessing import image
 
 # Flask utils
-from flask import Flask, redirect, url_for, request, render_template
+from flask import Flask, redirect, url_for, request, render_template,jsonify
 from werkzeug.utils import secure_filename
 from gevent.pywsgi import WSGIServer
 
@@ -26,7 +30,7 @@ MODEL_PATH = 'models/resNet_model.h5'
 model = load_model(MODEL_PATH)
 model._make_predict_function()          
 
-print('Model loaded. Check http://127.0.0.1:5000/')
+print('Model loaded')
 
 
 def model_predict(img_path, model):
@@ -43,6 +47,11 @@ def model_predict(img_path, model):
 def index():
     # Main page
     return render_template('index.html')
+
+@app.route('/toggle.html',methods=['GET'])
+def toggle():
+    # toggle page
+    return render_template('toggle.html')
 
 
 @app.route('/predict', methods=['GET', 'POST'])
@@ -62,12 +71,14 @@ def upload():
 
         # Process result for human
         # pred_class = preds.argmax(axis=-1)            # Simple argmax
-        pred_class = decode_predictions(preds, top=1)   # ImageNet Decode
-        result = str(pred_class[0][0][1])               # Convert to string
-        return result
+        pred_class = decode_predictions(preds, top=3)   # ImageNet Decode
+        classes=[]
+        for c in pred_class[0]:
+            classes.append({'name':c[1].replace('_',' '),'probability':"{:.2f}".format(c[2]*100),'summary':wikipedia.summary(c[1].replace('_',' '))})
+        return jsonify(classes)
     return None
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+	app.run(debug=True)
 
